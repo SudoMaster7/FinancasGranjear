@@ -46,7 +46,6 @@ body {
     padding-top: 56px; /* Ajuste para navbar sticky */
 }
 .navbar-brand { 
-    background-color: #10b981;
     font-weight: 700; 
 }
 .card { 
