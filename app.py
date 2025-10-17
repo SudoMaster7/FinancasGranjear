@@ -5,8 +5,6 @@ import json
 from datetime import datetime
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).parent))
-
 from flask import Flask, render_template, request, jsonify
 from flask_cors import CORS
 from dotenv import load_dotenv
@@ -17,8 +15,9 @@ try:
     import gspread
     from oauth2client.service_account import ServiceAccountCredentials
     GSPREAD_AVAILABLE = True
+    print("✓ gspread e oauth2client carregados")
 except Exception as e:
-    print(f"⚠️ Aviso: Dependências do Google Sheets não disponíveis: {e}")
+    print(f"❌ Erro ao importar dependências: {e}")
     GSPREAD_AVAILABLE = False
 
 app = Flask(__name__, static_folder='static', template_folder='templates')
@@ -32,14 +31,32 @@ ABA_PROFISSIONAIS = "Profissionais"
 def get_google_sheets_client():
     """Retorna cliente gspread autorizado"""
     if not GSPREAD_AVAILABLE:
-        raise ImportError("gspread não instalado.")
+        raise ImportError("gspread não disponível")
     
-    SCOPE = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+    SCOPE = [
+        "https://spreadsheets.google.com/feeds",
+        "https://www.googleapis.com/auth/drive"
+    ]
     
-    if os.getenv("GOOGLE_CREDENTIALS_JSON"):
-        creds_dict = json.loads(os.getenv("GOOGLE_CREDENTIALS_JSON"))
-        creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, SCOPE)
+    # Tenta variável de ambiente (Vercel)
+    creds_json = os.getenv("GOOGLE_CREDENTIALS_JSON")
+    
+    if creds_json:
+        print("✓ Usando credenciais da variável de ambiente")
+        try:
+            # Remove possíveis aspas extras
+            creds_json = creds_json.strip()
+            if creds_json.startswith("'") or creds_json.startswith('"'):
+                creds_json = creds_json[1:-1]
+            
+            creds_dict = json.loads(creds_json)
+            creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, SCOPE)
+        except json.JSONDecodeError as e:
+            print(f"❌ Erro ao parsear JSON: {e}")
+            raise
     else:
+        # Tenta arquivo local
+        print("✓ Usando credentials.json local")
         creds_path = "credentials.json"
         if not os.path.exists(creds_path):
             raise FileNotFoundError("❌ credentials.json não encontrado")
@@ -60,12 +77,12 @@ def safe_float(value, default=0.0):
         
         if ',' in s and '.' in s:
             s = s.replace('.', '').replace(',', '.')
-        elif ',' in s and '.' not in s:
+        elif ',' in s:
             s = s.replace(',', '.')
         
         s = ''.join(ch for ch in s if (ch.isdigit() or ch in '-+.'))
         return float(s) if s not in ['', '-', '+'] else default
-    except Exception:
+    except:
         return default
 
 # --- ROTAS DE PÁGINA ---
@@ -88,21 +105,24 @@ def api_profissionais():
         sheet = client.open(NOME_DA_PLANILHA).worksheet(ABA_PROFISSIONAIS)
     except Exception as e:
         print(f"❌ Erro ao acessar planilha: {e}")
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": f"Erro ao acessar planilha: {str(e)}"}), 500
 
     if request.method == 'GET':
         try:
             records = sheet.get_all_records()
+            print(f"✓ {len(records)} profissionais carregados")
             return jsonify(records), 200
         except Exception as e:
+            print(f"❌ Erro ao ler: {e}")
             return jsonify({"error": str(e)}), 500
 
+    # POST
     payload = request.get_json() or {}
     unidade = (payload.get('unidade') or '').strip()
     nome = (payload.get('nome') or '').strip()
     
     if not nome or not unidade:
-        return jsonify({"error": "Nome e unidade são obrigatórios"}), 400
+        return jsonify({"error": "Nome e unidade obrigatórios"}), 400
     
     try:
         headers = sheet.row_values(1)
@@ -135,20 +155,24 @@ def api_transacoes():
         client = get_google_sheets_client()
         sheet = client.open(NOME_DA_PLANILHA).worksheet(ABA_TRANSACOES)
     except Exception as e:
+        print(f"❌ Erro ao acessar planilha: {e}")
         return jsonify({"error": str(e)}), 500
 
     if request.method == 'GET':
         try:
             records = sheet.get_all_records()
+            print(f"✓ {len(records)} transações carregadas")
             return jsonify(records), 200
         except Exception as e:
+            print(f"❌ Erro: {e}")
             return jsonify({"error": str(e)}), 500
 
+    # POST
     payload = request.get_json() or {}
-    required_fields = ['unidade', 'data', 'tipo', 'categoria', 'descricao', 'valor']
+    required = ['unidade', 'data', 'tipo', 'categoria', 'descricao', 'valor']
     
-    for field in required_fields:
-        if not (payload.get(field) or ''):
+    for field in required:
+        if not payload.get(field):
             return jsonify({"error": f"Campo obrigatório: {field}"}), 400
     
     try:
@@ -157,20 +181,20 @@ def api_transacoes():
         for h in headers:
             h_lower = h.lower().strip()
             if h_lower == 'unidade':
-                row.append(payload.get('unidade', ''))
+                row.append(payload['unidade'])
             elif h_lower == 'data':
-                row.append(payload.get('data', ''))
+                row.append(payload['data'])
             elif h_lower == 'tipo':
-                row.append(payload.get('tipo', ''))
+                row.append(payload['tipo'])
             elif h_lower == 'categoria':
-                row.append(payload.get('categoria', ''))
+                row.append(payload['categoria'])
             elif h_lower == 'descricao':
-                row.append(payload.get('descricao', ''))
+                row.append(payload['descricao'])
             elif h_lower == 'valor':
-                row.append(payload.get('valor', '0.00'))
-            elif h_lower == 'forma_pagamento' or h_lower == 'forma de pagamento':
+                row.append(payload['valor'])
+            elif h_lower in ['forma_pagamento', 'forma de pagamento']:
                 row.append(payload.get('forma_pagamento', 'Dinheiro'))
-            elif h_lower == 'qtd_atendimentos' or h_lower == 'qtd atendimentos':
+            elif h_lower in ['qtd_atendimentos', 'qtd atendimentos']:
                 row.append(payload.get('qtd_atendimentos', ''))
             else:
                 row.append('')
@@ -205,7 +229,6 @@ def api_dashboard():
         data_fim = request.args.get('data_fim', '')
         unidade_filter = (request.args.get('unidade') or '').lower()
 
-        # Processa dados SEM pandas
         receita_total = 0
         despesa_total = 0
         despesas_por_categoria = {}
@@ -213,7 +236,6 @@ def api_dashboard():
         profissionais_dict = {}
 
         for record in records:
-            # Normaliza chaves
             rec = {k.lower().strip(): v for k, v in record.items()}
             
             data = rec.get('data', '')
@@ -224,7 +246,7 @@ def api_dashboard():
             valor = safe_float(rec.get('valor', 0))
             qtd_atend = safe_float(rec.get('qtd_atendimentos', 0))
 
-            # Aplica filtros
+            # Filtros
             if data_inicio and data < data_inicio:
                 continue
             if data_fim and data > data_fim:
@@ -240,17 +262,12 @@ def api_dashboard():
 
             # Despesas por categoria
             if tipo == 'despesa':
-                if categoria not in despesas_por_categoria:
-                    despesas_por_categoria[categoria] = 0
-                despesas_por_categoria[categoria] += valor
+                despesas_por_categoria[categoria] = despesas_por_categoria.get(categoria, 0) + valor
 
             # Performance unidades
             if unidade not in performance_unidades:
                 performance_unidades[unidade] = 0
-            if tipo == 'receita':
-                performance_unidades[unidade] += valor
-            else:
-                performance_unidades[unidade] -= valor
+            performance_unidades[unidade] += valor if tipo == 'receita' else -valor
 
             # Top profissionais
             if categoria.lower() == 'profissionais da clínica' and tipo == 'despesa':
@@ -261,7 +278,6 @@ def api_dashboard():
                     }
                 profissionais_dict[descricao]['atendimentos'] += int(qtd_atend) if qtd_atend > 0 else 1
 
-        # Top 5 profissionais
         top_prof = sorted(
             [
                 {
@@ -276,13 +292,11 @@ def api_dashboard():
             reverse=True
         )[:5]
 
-        saldo = receita_total - despesa_total
-
         return jsonify({
             "kpis": {
                 "receita": round(receita_total, 2),
                 "despesa": round(despesa_total, 2),
-                "saldo": round(saldo, 2)
+                "saldo": round(receita_total - despesa_total, 2)
             },
             "despesas_por_categoria": {k: round(v, 2) for k, v in despesas_por_categoria.items()},
             "receita_vs_despesa": {
@@ -295,13 +309,14 @@ def api_dashboard():
         }), 200
 
     except Exception as e:
-        print(f"❌ Erro: {e}")
+        print(f"❌ Erro dashboard: {e}")
         import traceback
         traceback.print_exc()
         return jsonify({"error": str(e)}), 500
 
+# Para Vercel
 from werkzeug.middleware.proxy_fix import ProxyFix
 app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_port=1)
 
 if __name__ == '__main__':
-    app.run(debug=True, port=5001)
+    app.run(debug=True, port=5000)
