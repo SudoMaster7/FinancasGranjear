@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard e Relatórios - Espaço Granjear{% endblock %}
+
+{% block content %}
+<!-- Filtros Globais -->
+<div class="card shadow-sm mb-4">
+    <div class="card-body">
+        <div class="row g-3 align-items-end">
+            <div class="col-md-4">
+                <label for="filtroUnidadeGlobal" class="form-label">Filtrar por Unidade</label>
+                <select id="filtroUnidadeGlobal" class="form-select">
+                    <option value="Todas">Todas as Unidades</option>
+                    <option value="Xerém">Xerém</option>
+                    <option value="Duque de Caxias">Duque de Caxias</option>
+                    <option value="São Cristóvão">São Cristóvão</option>
+                    <option value="Botafogo">Botafogo</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label for="dataInicio" class="form-label">De</label>
+                <input type="date" id="dataInicio" class="form-control">
+            </div>
+            <div class="col-md-3">
+                <label for="dataFim" class="form-label">Até</label>
+                <input type="date" id="dataFim" class="form-control">
+            </div>
+            <div class="col-md-2">
+                <div class="d-grid">
+                    <button id="btnAplicarFiltros" class="btn btn-primary"><i class="bi bi-funnel-fill"></i> Aplicar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- KPIs -->
+<div class="row mb-4">
+    <!-- Card Receita -->
+    <div class="col-md-4 mb-3">
+        <div class="card kpi-card shadow-sm">
+            <div class="card-body d-flex justify-content-between align-items-center">
+                <div>
+                    <h6 class="card-title text-muted text-uppercase">Receita Total</h6>
+                    <p class="kpi-value text-success mb-0" id="kpi-receita">R$ 0,00</p>
+                </div>
+                <i class="bi bi-graph-up-arrow kpi-icon text-success"></i>
+            </div>
+        </div>
+    </div>
+    <!-- Card Despesa -->
+    <div class="col-md-4 mb-3">
+        <div class="card kpi-card shadow-sm">
+            <div class="card-body d-flex justify-content-between align-items-center">
+                <div>
+                    <h6 class="card-title text-muted text-uppercase">Despesa Total</h6>
+                    <p class="kpi-value text-danger mb-0" id="kpi-despesa">R$ 0,00</p>
+                </div>
+                <i class="bi bi-graph-down-arrow kpi-icon text-danger"></i>
+            </div>
+        </div>
+    </div>
+    <!-- Card Saldo -->
+    <div class="col-md-4 mb-3">
+        <div class="card kpi-card shadow-sm">
+            <div class="card-body d-flex justify-content-between align-items-center">
+                <div>
+                    <h6 class="card-title text-muted text-uppercase">Saldo</h6>
+                    <p class="kpi-value text-primary mb-0" id="kpi-saldo">R$ 0,00</p>
+                </div>
+                <i class="bi bi-wallet2 kpi-icon text-primary"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Gráficos -->
+<div class="row mb-4">
+    <div class="col-lg-6 mb-4">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h5 class="card-title">Despesas por Categoria</h5>
+                <div style="height: 300px;"><canvas id="graficoDespesas"></canvas></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6 mb-4">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h5 class="card-title">Receita vs. Despesa Mensal</h5>
+                <div style="height: 300px;"><canvas id="graficoReceitaDespesa"></canvas></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Gráficos e Tabela (Linha 2) -->
+<div class="row">
+    <div class="col-lg-6 mb-4">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h5 class="card-title">Performance de Receita por Unidade (Total)</h5>
+                <div style="height: 300px;"><canvas id="graficoUnidades"></canvas></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6 mb-4">
+        <div class="card shadow-sm">
+            <div class="card-header bg-light">
+                <h6 class="mb-0">
+                    <i class="bi bi-trophy-fill text-warning"></i> Top 5 Profissionais
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover table-sm align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="fw-bold">Profissional</th>
+                                <th class="text-center fw-bold">Atendimentos</th>
+                                <th class="text-center fw-bold">Valor/Atend.</th>
+                                <th class="text-end fw-bold">Valor Total</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabelaTopProfissionais"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+{% endblock %}

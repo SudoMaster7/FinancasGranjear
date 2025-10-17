@@ -1,0 +1,41 @@
+# Ambiente
+.env
+.env.local
+.env.*.local
+venv/
+env/
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Dependências
+node_modules/
+.npm
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Credenciais
+credentials.json
+service-account-key.json
+
+# Logs
+*.log
+npm-debug.log*
+
+# Cache
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Vercel
+.vercel
+dist/

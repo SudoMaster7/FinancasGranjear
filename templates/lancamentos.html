@@ -1,0 +1,224 @@
+{% extends "base.html" %}
+
+{% block title %}Lançamentos Financeiros - Espaço Granjear{% endblock %}
+
+{% block content %}
+<div id="loadingSpinner" class="spinner-container d-none" role="status" aria-hidden="true">
+    <div class="spinner-border text-primary" role="status" aria-label="Carregando"></div>
+</div>
+
+<div class="row">
+    <!-- Coluna do Formulário -->
+    <div class="col-lg-4 mb-4">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="card-title mb-0">Novo Lançamento</h5>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-toggle="modal" data-bs-target="#modalProfissional">
+                        <i class="bi bi-person-plus"></i> Profissional
+                    </button>
+                </div>
+
+                <form id="form-transacao">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Unidade *</label>
+                        <select id="unidade" class="form-select" required>
+                            <option value="">-- Selecione a unidade --</option>
+                            <option value="Xerém">Xerém</option>
+                            <option value="Duque de Caxias">Duque de Caxias</option>
+                            <option value="São Cristóvão">São Cristóvão</option>
+                            <option value="Botafogo">Botafogo</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Data *</label>
+                        <input id="data" type="date" class="form-control" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Tipo *</label>
+                        <select id="tipo" class="form-select" required>
+                            <option value="">-- Selecione o tipo --</option>
+                            <option value="Receita">Receita</option>
+                            <option value="Despesa">Despesa</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Categoria *</label>
+                        <select id="categoria" class="form-select" required>
+                            <option value="">-- Selecione a categoria --</option>
+                        </select>
+                    </div>
+
+                    <!-- Campo descrição padrão -->
+                    <div class="mb-3" id="campo-descricao">
+                        <label class="form-label fw-bold">Descrição *</label>
+                        <input id="descricao" type="text" class="form-control" placeholder="Ex: Conta de luz, Aluguel...">
+                    </div>
+
+                    <!-- Select de profissionais (oculto por padrão) -->
+                    <div class="mb-3 d-none" id="campo-profissional">
+                        <label class="form-label fw-bold">Profissional *</label>
+                        <select id="profissional" class="form-select">
+                            <option value="">-- Selecione o profissional --</option>
+                        </select>
+                    </div>
+
+                    <!-- Campo quantidade atendimentos (oculto por padrão) -->
+                    <div class="mb-3 d-none" id="campo-qtd-atendimentos">
+                        <label class="form-label fw-bold">Qtd. Atendimentos</label>
+                        <input id="qtd-atendimentos" type="number" class="form-control" min="1" value="1">
+                    </div>
+
+                    <!-- Campo valor ao profissional (oculto por padrão) -->
+                    <div class="mb-3 d-none" id="campo-valor-profissional">
+                        <label class="form-label fw-bold">Valor ao Profissional</label>
+                        <div class="input-group">
+                            <span class="input-group-text">R$</span>
+                            <input id="valor-profissional" type="text" class="form-control" placeholder="0,00">
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Valor Total *</label>
+                        <div class="input-group">
+                            <span class="input-group-text">R$</span>
+                            <input id="valor" type="text" class="form-control" placeholder="0,00" required>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Forma de Pagamento</label>
+                        <select id="forma_pagamento" class="form-select">
+                            <option value="Dinheiro">Dinheiro</option>
+                            <option value="Cartão Crédito">Cartão Crédito</option>
+                            <option value="Cartão Débito">Cartão Débito</option>
+                            <option value="Pix">Pix</option>
+                            <option value="Transferência">Transferência</option>
+                            <option value="Cheque">Cheque</option>
+                        </select>
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        <button class="btn btn-primary btn-lg" type="submit">
+                            <i class="bi bi-check-circle"></i> Salvar Lançamento
+                        </button>
+                        <button class="btn btn-outline-secondary" type="reset">
+                            <i class="bi bi-arrow-clockwise"></i> Limpar
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Coluna da Tabela -->
+    <div class="col-lg-8">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h5 class="mb-4">
+                    <i class="bi bi-table"></i> Histórico de Transações
+                </h5>
+
+                <!-- Filtros -->
+                <div class="row g-2 mb-4">
+                    <div class="col-md-4">
+                        <label class="form-label small fw-bold">Filtrar Unidade</label>
+                        <select id="filtro-unidade" class="form-select form-select-sm">
+                            <option value="">Todas</option>
+                            <option value="Xerém">Xerém</option>
+                            <option value="Duque de Caxias">Duque de Caxias</option>
+                            <option value="São Cristóvão">São Cristóvão</option>
+                            <option value="Botafogo">Botafogo</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label small fw-bold">Filtrar Mês</label>
+                        <input id="filtro-mes" type="month" class="form-control form-control-sm">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label small fw-bold">Buscar</label>
+                        <input id="filtro-busca" type="search" class="form-control form-control-sm" placeholder="Descrição, categoria...">
+                    </div>
+                </div>
+
+                <!-- Tabela -->
+                <div class="table-responsive">
+                    <table class="table table-hover table-sm align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Data</th>
+                                <th>Unidade</th>
+                                <th>Tipo</th>
+                                <th>Categoria</th>
+                                <th>Descrição</th>
+                                <th class="text-end">Valor</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabela-transacoes"></tbody>
+                    </table>
+                    <div id="sem-transacoes" class="text-center text-muted py-5 d-none">
+                        <i class="bi bi-inbox"></i><br>
+                        Nenhuma transação encontrada.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para Adicionar Profissional -->
+<div class="modal fade" id="modalProfissional" tabindex="-1" aria-labelledby="modalProfissionalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form id="form-profissional">
+        <div class="modal-header">
+          <h5 class="modal-title" id="modalProfissionalLabel">
+            <i class="bi bi-person-plus"></i> Novo Profissional
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label fw-bold">Unidade *</label>
+            <select id="prof-unidade" class="form-select" required>
+                <option value="">-- Selecione a unidade --</option>
+                <option value="Xerém">Xerém</option>
+                <option value="Duque de Caxias">Duque de Caxias</option>
+                <option value="São Cristóvão">São Cristóvão</option>
+                <option value="Botafogo">Botafogo</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-bold">Nome *</label>
+            <input id="prof-nome" type="text" class="form-control" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-bold">Especialidade</label>
+            <input id="prof-especialidade" type="text" class="form-control" placeholder="Ex: Fisioterapeuta">
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-bold">Valor por Atendimento</label>
+            <div class="input-group">
+                <span class="input-group-text">R$</span>
+                <input id="prof-valor" type="text" class="form-control" placeholder="0,00">
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" data-bs-dismiss="modal" type="button">Cancelar</button>
+          <button class="btn btn-primary" type="submit">
+            <i class="bi bi-check-circle"></i> Salvar
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/lancamentos.js') }}"></script>
+{% endblock %}

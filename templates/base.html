@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="pt-br" data-bs-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Espaço Granjear{% endblock %}</title>
+    
+    <!-- Estilos e Fontes -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+
+    <!-- pequeno CSS para garantir navbar colada ao topo -->
+    <style>
+        html, body { margin: 0; padding: 0; }
+        /* torna navbar fixa no topo e acima do conteúdo */
+        .navbar.fixed-top { top: 0; z-index: 1030; }
+        /* padding-top do body será ajustado dinamicamente via JS com a altura real da navbar */
+        body { padding-top: var(--navbar-height, 56px); transition: padding-top .12s; }
+        /* aparência da navbar quando estiver "scrolled" (mesma aparência em topo/rola) */
+        .navbar.scrolled { box-shadow: 0 .125rem .25rem rgba(0,0,0,.08); }
+    </style>
+    
+    <!-- Scripts Essenciais -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+
+    <!-- Script do Tema e Acessibilidade (Executado no Head para evitar FOUC) -->
+    <script>
+        const accessibility = {
+            fontSize: 1, darkMode: false, highContrast: false,
+            init() { this.loadPreferences(); this.applyPreferences(); },
+            loadPreferences() {
+                this.fontSize = parseFloat(localStorage.getItem('fontSize') || '1');
+                this.darkMode = localStorage.getItem('darkMode') === 'true';
+                this.highContrast = localStorage.getItem('highContrast') === 'true';
+            },
+            savePreferences() {
+                localStorage.setItem('fontSize', this.fontSize);
+                localStorage.setItem('darkMode', this.darkMode);
+                localStorage.setItem('highContrast', this.highContrast);
+            },
+            applyPreferences() {
+                document.documentElement.style.fontSize = `${this.fontSize}rem`;
+                const htmlEl = document.documentElement;
+                if (this.highContrast) {
+                    document.body.classList.add('high-contrast-mode');
+                    htmlEl.setAttribute('data-bs-theme', 'dark');
+                } else {
+                    document.body.classList.remove('high-contrast-mode');
+                    htmlEl.setAttribute('data-bs-theme', this.darkMode ? 'dark' : 'light');
+                }
+            },
+            toggleDarkMode(enabled) { this.darkMode = enabled; this.saveAndApply(); },
+            toggleHighContrast(enabled) { this.highContrast = enabled; this.saveAndApply(); },
+            changeFontSize(increase) {
+                this.fontSize = increase ? Math.min(this.fontSize + 0.1, 1.5) : Math.max(this.fontSize - 0.1, 0.7);
+                this.saveAndApply();
+            },
+            saveAndApply() { this.savePreferences(); this.applyPreferences(); }
+        };
+        accessibility.init();
+    </script>
+</head>
+<body class="bg-body-tertiary">
+
+    <nav id="mainNavbar" class="navbar navbar-expand-lg bg-body-tertiary border-bottom fixed-top shadow-sm">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="{{ url_for('index') }}"><i class="bi bi-bank"></i> Espaço Granjear</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.path == url_for('index') %}active{% endif %}" href="{{ url_for('index') }}"><i class="bi bi-pencil-square"></i> Lançamentos</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.path == url_for('dashboard') %}active{% endif %}" href="{{ url_for('dashboard') }}"><i class="bi bi-bar-chart-line-fill"></i> Dashboard</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+    
+    <main id="mainContent" class="container-fluid my-4">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Menu Flutuante de Acessibilidade -->
+    <div class="accessibility-menu dropup">
+        <button class="btn btn-primary btn-lg rounded-circle shadow" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="Menu de Acessibilidade">
+            <i class="bi bi-universal-access"></i>
+        </button>
+        <ul class="dropdown-menu shadow-lg">
+            <li class="dropdown-header">Opções de Acessibilidade</li>
+            <li><hr class="dropdown-divider"></li>
+            <li class="px-3 py-1">
+                <div class="d-flex justify-content-between align-items-center">
+                    <span>Tamanho da Fonte</span>
+                    <div>
+                        <button class="btn btn-sm btn-outline-secondary" id="decrease-font" title="Diminuir fonte">A-</button>
+                        <button class="btn btn-sm btn-outline-secondary" id="increase-font" title="Aumentar fonte">A+</button>
+                    </div>
+                </div>
+            </li>
+            <li><hr class="dropdown-divider"></li>
+            <li class="dropdown-item">
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" role="switch" id="dark-mode-toggle">
+                    <label class="form-check-label" for="dark-mode-toggle">Modo Noturno</label>
+                </div>
+            </li>
+            <li class="dropdown-item">
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" role="switch" id="high-contrast-toggle">
+                    <label class="form-check-label" for="high-contrast-toggle">Alto Contraste</label>
+                </div>
+            </li>
+        </ul>
+    </div>
+
+    <!-- Spinner Global -->
+    <div class="spinner-container d-none" id="loadingSpinner">
+        <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status">
+            <span class="visually-hidden">Carregando...</span>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Lógica para interagir com o objeto accessibility a partir dos botões
+        document.addEventListener('DOMContentLoaded', () => {
+            const darkModeToggle = document.getElementById('dark-mode-toggle');
+            const highContrastToggle = document.getElementById('high-contrast-toggle');
+
+            // Sincroniza os toggles com o estado atual
+            darkModeToggle.checked = accessibility.darkMode;
+            highContrastToggle.checked = accessibility.highContrast;
+            if (accessibility.highContrast) darkModeToggle.disabled = true;
+
+            document.getElementById('increase-font').addEventListener('click', () => accessibility.changeFontSize(true));
+            document.getElementById('decrease-font').addEventListener('click', () => accessibility.changeFontSize(false));
+            
+            darkModeToggle.addEventListener('click', (e) => accessibility.toggleDarkMode(e.target.checked));
+            highContrastToggle.addEventListener('click', (e) => {
+                accessibility.toggleHighContrast(e.target.checked);
+                darkModeToggle.disabled = e.target.checked;
+                if(e.target.checked) darkModeToggle.checked = true;
+            });
+        });
+    </script>
+    <script>
+        // ajusta padding-top do body para altura real da navbar e sincroniza classe scrolled
+        (function(){
+            function refreshNavbarHeight() {
+                const nav = document.getElementById('mainNavbar');
+                if (!nav) return;
+                const h = nav.getBoundingClientRect().height || 56;
+                document.documentElement.style.setProperty('--navbar-height', h + 'px');
+                document.body.style.paddingTop = 'calc(var(--navbar-height))';
+            }
+            function onScrollToggle() {
+                const nav = document.getElementById('mainNavbar');
+                if (!nav) return;
+                // quando distante do topo adiciona classe scrolled, quando no topo remove — aqui deixamos sempre com mesma aparência:
+                if (window.scrollY > 0) nav.classList.add('scrolled');
+                else nav.classList.remove('scrolled');
+            }
+            // init
+            window.addEventListener('resize', refreshNavbarHeight);
+            window.addEventListener('load', function(){ refreshNavbarHeight(); onScrollToggle(); });
+            window.addEventListener('scroll', onScrollToggle);
+            // run now
+            refreshNavbarHeight();
+            onScrollToggle();
+        })();
+    </script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

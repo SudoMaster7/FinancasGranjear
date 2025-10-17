@@ -1,0 +1,87 @@
+/* Import da Fonte */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+/* Estilo base e temas de acessibilidade */
+:root {
+    --bs-body-font-family: 'Inter', sans-serif;
+    --bs-primary-rgb: 71, 146, 224; /* Azul suave */
+    --bs-secondary-rgb: 108, 117, 125;
+}
+
+/* Tema Escuro (Dark Mode) */
+[data-bs-theme="dark"] {
+    --bs-body-bg: #212529;
+    --bs-body-color: #dee2e6;
+    --bs-tertiary-bg: #343a40;
+    --bs-border-color: rgba(255, 255, 255, 0.15);
+    --bs-card-bg: #343a40;
+}
+
+/* Tema de Alto Contraste */
+body.high-contrast-mode {
+    --bs-body-bg: #000;
+    --bs-body-color: #fff;
+    --bs-tertiary-bg: #000;
+    --bs-border-color: #fff;
+    --bs-card-bg: #000;
+    --bs-card-border-color: #fff;
+    --bs-primary: #ffff00;
+    --bs-primary-rgb: 255, 255, 0;
+    --bs-btn-primary-color: #000;
+    --bs-table-striped-bg: #1a1a1a;
+}
+body.high-contrast-mode a, body.high-contrast-mode .btn-link { 
+    text-decoration: underline !important; 
+    color: #ffff00 !important; 
+}
+body.high-contrast-mode .form-control, body.high-contrast-mode .form-select {
+    background-color: #000;
+    color: #fff;
+    border-color: #fff;
+}
+
+/* Estilos gerais */
+body { 
+    transition: background-color 0.3s, color 0.3s; 
+    padding-top: 56px; /* Ajuste para navbar sticky */
+}
+.navbar-brand { 
+    font-weight: 700; 
+}
+.card { 
+    border-radius: 0.75rem;
+    height: 100%;
+}
+.kpi-card .card-title { 
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+.kpi-card .kpi-value { 
+    font-size: 2rem; 
+    font-weight: 700; 
+}
+.kpi-icon { 
+    font-size: 2.5rem; 
+    opacity: 0.2; 
+}
+.spinner-container {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background-color: rgba(0,0,0,0.5); display: flex;
+    justify-content: center; align-items: center; z-index: 1060;
+}
+
+/* Menu de Acessibilidade */
+.accessibility-menu { 
+    position: fixed; 
+    bottom: 20px; 
+    right: 20px; 
+    z-index: 1050; 
+}
+.accessibility-menu .dropdown-menu { 
+    min-width: 250px; 
+}
+.accessibility-menu .dropdown-item { 
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center; 
+}
